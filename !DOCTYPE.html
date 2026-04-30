@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dr.5 Research Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    :root{
+      --navy:#0f2742;
+      --blue:#185FA5;
+      --blue2:#2E86DE;
+      --sky:#EAF4FF;
+      --mint:#E9F8F1;
+      --green:#1D9E75;
+      --orange:#EF9F27;
+      --rose:#D4537E;
+      --purple:#7F77DD;
+      --ink:#172033;
+      --muted:#6F7A8A;
+      --line:#E6EAF0;
+      --soft:#F5F7FB;
+      --white:#FFFFFF;
+      --shadow:0 18px 45px rgba(15,39,66,.08);
+      --shadow-sm:0 8px 22px rgba(15,39,66,.06);
+      --radius:22px;
+      --radius-sm:14px;
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      min-height:100vh;
+      font-family:Pretendard,"Noto Sans KR",Apple SD Gothic Neo,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,rgba(46,134,222,.16),transparent 32rem),
+        radial-gradient(circle at top right,rgba(29,158,117,.13),transparent 28rem),
+        linear-gradient(180deg,#F8FAFD 0%,#EEF3F8 100%);
+    }
+    a{color:inherit;text-decoration:none}
+    button,input{font-family:inherit}
+
+    .page{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:20px 0 34px}
+
+    .hero{
+      position:relative;
+      min-height:280px;
+      overflow:hidden;
+      border-radius:28px;
+      background:linear-gradient(135deg,#0F2742 0%,#185FA5 58%,#44B3A2 100%);
+      box-shadow:var(--shadow);
+      display:grid;
+      grid-template-columns:1.4fr .9fr;
+      align-items:stretch;
+      margin-bottom:16px;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(90deg,rgba(15,39,66,.92) 0%,rgba(15,39,66,.72) 48%,rgba(15,39,66,.15) 100%),
+        radial-gradient(circle at 75% 12%,rgba(255,255,255,.28),transparent 18rem);
+      z-index:1;
+    }
+    .hero-content{position:relative;z-index:2;padding:34px;display:flex;flex-direction:column;justify-content:space-between;gap:24px}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;width:max-content;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.88);font-size:12px;font-weight:700;letter-spacing:.4px}
+    .hero h1{font-size:clamp(30px,4.2vw,54px);line-height:1.04;color:white;letter-spacing:-1.6px;margin:12px 0 10px}
+    .hero p{max-width:650px;color:rgba(255,255,255,.84);font-size:15px;line-height:1.8}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .pill-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;transition:.18s ease;white-space:nowrap}
+    .pill-primary{background:#fff;color:var(--navy)}
+    .pill-primary:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(255,255,255,.18)}
+    .pill-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.24)}
+    .pill-ghost:hover{background:rgba(255,255,255,.18)}
+    .hero-meta{display:flex;gap:12px;flex-wrap:wrap}
+    .meta-chip{padding:9px 12px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.9);font-size:12px;line-height:1.4}
+    .hero-photo{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:flex-end;min-height:280px}
+    .hero-photo img{height:100%;max-height:310px;width:auto;object-fit:contain;filter:drop-shadow(0 20px 38px rgba(0,0,0,.28))}
+
+    .toolbar{
+      position:sticky;
+      top:10px;
+      z-index:20;
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:10px;
+      align-items:center;
+      background:rgba(255,255,255,.82);
+      backdrop-filter:blur(18px);
+      border:1px solid rgba(230,234,240,.88);
+      border-radius:20px;
+      padding:12px;
+      margin-bottom:16px;
+      box-shadow:var(--shadow-sm);
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;color:var(--navy);white-space:nowrap}
+    .brand-mark{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--green));display:grid;place-items:center;color:white;font-weight:900}
+    .brand span{color:var(--blue)}
+    .search{position:relative}
+    .search input{width:100%;height:38px;border:1px solid var(--line);border-radius:13px;background:#F8FAFD;padding:0 14px 0 38px;outline:none;font-size:13px;color:var(--ink);transition:.16s}
+    .search input:focus{background:#fff;border-color:rgba(24,95,165,.45);box-shadow:0 0 0 4px rgba(24,95,165,.08)}
+    .search::before{content:"⌕";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:#A8B1BE}
+    .clock{text-align:right;white-space:nowrap}
+    .clock .time{font-size:18px;font-weight:900;color:var(--navy);letter-spacing:.8px}
+    .clock .date{font-size:11px;color:var(--muted);margin-top:1px}
+
+    .tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+    .tabs button{border:0;background:#fff;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:.16s;box-shadow:0 4px 14px rgba(15,39,66,.03)}
+    .tabs button:hover{border-color:rgba(24,95,165,.28);color:var(--blue)}
+    .tabs button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+    .tab{display:none}.tab.active{display:block}
+    .grid{display:grid;gap:16px}.grid.two{grid-template-columns:1.12fr .88fr}.grid.equal{grid-template-columns:repeat(2,1fr)}.grid.four{grid-template-columns:repeat(4,1fr)}
+    .section{margin-bottom:16px}
+    .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,234,240,.9);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm)}
+    .card.compact{padding:16px;border-radius:18px}
+    .card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .card-title h2{font-size:17px;letter-spacing:-.3px;color:var(--navy)}
+    .card-title p{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+    .small-label{font-size:11px;color:#9AA5B3;font-weight:900;text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px}
+
+    .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .kpi{padding:16px;border-radius:18px;background:linear-gradient(180deg,#F8FAFD,#F2F6FA);border:1px solid #EBEFF4}
+    .kpi strong{display:block;font-size:25px;color:var(--navy);letter-spacing:-.8px}
+    .kpi span{display:block;font-size:12px;color:var(--muted);margin-top:4px}.kpi em{display:inline-block;margin-top:8px;font-size:11px;font-style:normal;font-weight:900}.up{color:#2E7D32}.down{color:#C62828}
+    .source{font-size:10.5px;color:#9AA5B3;margin-top:10px;padding-top:8px;border-top:1px solid #EEF1F5;line-height:1.6}.source a{text-decoration:underline;text-underline-offset:2px;color:#7D8897}.source a:hover{color:var(--blue)}
+
+    .weather-current{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:16px;border-radius:20px;background:linear-gradient(135deg,#EAF4FF,#F8FBFF);border:1px solid #DDEBFA;margin-bottom:12px}
+    .weather-current .icon{font-size:48px}.weather-current .temp{font-size:36px;font-weight:900;color:var(--navy);letter-spacing:-1.2px}.weather-current .desc{font-size:13px;color:#435064;margin-top:2px}.weather-current .badge{font-size:11px;color:var(--blue);font-weight:900;background:#fff;border:1px solid #DDEBFA;padding:7px 10px;border-radius:999px}
+    .city-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.city-tabs button{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:7px 13px;font-size:12px;font-weight:900;cursor:pointer}.city-tabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+    .forecast{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}.day{min-width:72px;text-align:center;background:#F8FAFD;border:1px solid #EEF1F5;border-radius:16px;padding:10px 6px}.day.today{background:#EAF4FF;border-color:#CFE2F6}.day .d{font-size:10.5px;color:var(--muted);font-weight:800;min-height:25px}.day .i{font-size:20px;margin:3px 0}.day .hi{font-size:12px;font-weight:900;color:#C62828}.day .lo{font-size:12px;font-weight:900;color:var(--blue)}.day .rain{font-size:10px;color:#9AA5B3;margin-top:3px}
+
+    .news-item,.research-item{padding:14px 0;border-bottom:1px solid #EEF1F5}.news-item:last-child,.research-item:last-child{border-bottom:0}.tag{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;font-size:10.5px;font-weight:900;margin-bottom:7px}.tag.kr{background:#EAF4FF;color:#0C447C}.tag.sw{background:#EEEDFE;color:#3C3489}.tag.us{background:#EAF7E7;color:#27500A}.tag.eu{background:#FFF2DA;color:#633806}.tag.ps{background:#FBEAF0;color:#72243E}.tag.biz{background:#E1F5EE;color:#085041}
+    .item-title{font-size:14px;font-weight:850;color:var(--ink);line-height:1.55;cursor:pointer;transition:.15s}.item-title:hover{color:var(--blue)}.item-meta{font-size:11.5px;color:#99A3B1;margin-top:4px}.item-summary{font-size:12.5px;color:#637083;line-height:1.75;margin-top:5px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.mini-tag{font-size:10.5px;color:#738094;background:#F2F5F8;border-radius:999px;padding:4px 8px}
+
+    .chart-wrap{position:relative;height:220px;margin-top:6px}.chart-wrap.tall{height:250px}
+    .quick-links{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick-link{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border:1px solid #E8EDF3;border-radius:16px;background:#fff;transition:.16s}.quick-link:hover{transform:translateY(-1px);border-color:#CFE0F2;background:#F8FBFF}.quick-link b{font-size:13px}.quick-link small{display:block;margin-top:3px;color:#8A95A4;font-size:11px;line-height:1.4}.arrow{color:var(--blue);font-weight:900}
+    .youtube-card{display:flex;align-items:center;gap:13px;background:#F8FAFD;border:1px solid #EEF1F5;border-radius:18px;padding:14px}.yt-icon{width:42px;height:42px;border-radius:50%;background:#FF0000;display:grid;place-items:center;color:#fff;font-weight:900;flex:0 0 auto}.youtube-card b{font-size:13px}.youtube-card small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}.btn-red{margin-left:auto;background:#FF0000;color:#fff;border-radius:12px;padding:8px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+
+    .profile{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}.avatar{width:86px;height:86px;border-radius:28px;background:linear-gradient(135deg,var(--blue),var(--green));display:grid;place-items:center;color:#fff;font-size:34px;font-weight:900;box-shadow:0 14px 30px rgba(24,95,165,.22)}.profile h2{font-size:24px;color:var(--navy);letter-spacing:-.5px}.profile p{font-size:13px;color:var(--muted);line-height:1.8;margin-top:5px}.interest-list{display:grid;gap:10px}.interest{display:flex;align-items:center;gap:12px;padding:13px;border-radius:17px;background:#F8FAFD;border:1px solid #EEF1F5}.interest .emoji{font-size:20px}.interest b{font-size:13px}.interest small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+    .footnote{font-size:11.5px;color:#8A95A4;line-height:1.85;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+
+    @media(max-width:900px){.hero{grid-template-columns:1fr}.hero-photo{display:none}.toolbar{grid-template-columns:1fr}.brand,.clock{justify-content:center;text-align:center}.grid.two,.grid.equal,.grid.four,.quick-links{grid-template-columns:1fr}.weather-current{grid-template-columns:auto 1fr}.weather-current .badge{grid-column:1/-1;width:max-content}.hero-content{padding:26px}.page{width:min(100% - 20px,1180px)}}
+    @media(max-width:560px){.hero{min-height:auto;border-radius:22px}.hero h1{font-size:32px}.hero p{font-size:14px}.hero-meta{display:none}.card{padding:16px;border-radius:20px}.kpi-grid{grid-template-columns:1fr}.tabs button{padding:9px 13px}.profile{grid-template-columns:1fr}.avatar{width:74px;height:74px;border-radius:22px}.weather-current .temp{font-size:30px}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-content">
+        <div>
+          <div class="eyebrow">PKNU Social Welfare · Research Intelligence</div>
+          <h1>Dr.5 Academic<br />Research Dashboard</h1>
+          <p>사회복지, 노인건강, 건강정보, AI, 지방재정, 지역사회 연구를 한 화면에서 탐색하는 개인 연구자 허브입니다.</p>
+          <div class="hero-actions">
+            <a class="pill-link pill-primary" href="https://sites.google.com/view/50325/home" target="_blank">Dr.5 홈페이지 열기</a>
+            <a class="pill-link pill-ghost" href="https://scholar.google.com/citations?user=NvKC9dQAAAAJ&hl=ko" target="_blank">Google Scholar</a>
+            <a class="pill-link pill-ghost" href="https://www.youtube.com/@dr.50325" target="_blank">YouTube</a>
+          </div>
+        </div>
+        <div class="hero-meta">
+          <div class="meta-chip"><b>Affiliation</b><br />국립부경대학교 사회복지학 전공</div>
+          <div class="meta-chip"><b>Focus</b><br />AI · Elder Health · Community Care</div>
+          <div class="meta-chip"><b>Mode</b><br />Live weather · Scholar search · Visual stats</div>
+        </div>
+      </div>
+      <div class="hero-photo">
+        <img src="https://raw.githubusercontent.com/pknu503/home503/main/ChatGPT%20Image%202026%EB%85%84%204%EC%9B%94%2028%EC%9D%BC%20%EC%98%A4%ED%9B%84%2001_25_02.png" alt="오영삼 교수" />
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <div class="brand"><div class="brand-mark">5</div>SW<span>Research</span></div>
+      <div class="search"><input id="searchInput" type="text" placeholder="Google Scholar 논문 검색어 입력 후 Enter" onkeydown="handleSearch(event)" /></div>
+      <div class="clock"><div class="time" id="clock">--:--:--</div><div class="date" id="cdate"></div></div>
+    </section>
+
+    <nav class="tabs">
+      <button class="active" onclick="switchTab('home',this)">홈</button>
+      <button onclick="switchTab('welfare',this)">복지 데이터</button>
+      <button onclick="switchTab('research',this)">연구 동향</button>
+      <button onclick="switchTab('dr5',this)">Dr.5</button>
+    </nav>
+
+    <section id="tab-home" class="tab active">
+      <div class="grid two section">
+        <div class="card">
+          <div class="card-title">
+            <div><h2>오늘의 날씨</h2><p>부산 · 대구 · 서울의 현재 날씨와 10일 예보</p></div>
+            <a class="pill-link pill-ghost" style="background:#F8FAFD;color:var(--blue);border-color:#DDEBFA" href="https://open-meteo.com" target="_blank">Open-Meteo</a>
+          </div>
+          <div class="city-tabs">
+            <button id="wBtn-busan" class="active" onclick="showCity('busan')">부산</button>
+            <button id="wBtn-daegu" onclick="showCity('daegu')">대구</button>
+            <button id="wBtn-seoul" onclick="showCity('seoul')">서울</button>
+          </div>
+          <div id="weatherContent">날씨 불러오는 중...</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><div><h2>복지 핵심 지표</h2><p>빠르게 확인하는 대시보드용 요약 지표</p></div></div>
+          <div class="kpi-grid">
+            <div class="kpi"><strong>312만</strong><span>기초생활수급자</span><em class="up">▲ 2.1%</em></div>
+            <div class="kpi"><strong>243조</strong><span>복지 예산</span><em class="up">▲ 5.8%</em></div>
+            <div class="kpi"><strong>87.4%</strong><span>서비스 이용률</span><em class="down">▼ 0.3%</em></div>
+            <div class="kpi"><strong>1,142만</strong><span>노인 인구</span><em class="up">▲ 4.2%</em></div>
+          </div>
+          <div class="source">※ 공개용 사용 전 최신 원자료 검증 권장: 보건복지부, 통계청, 기획재정부.</div>
+        </div>
+      </div>
+
+      <div class="grid equal section">
+        <div class="card">
+          <div class="card-title"><div><h2>오늘의 주요 이슈</h2><p>복지정책·심리·경영·국제 동향 검색형 링크</p></div></div>
+          <div class="news-item"><span class="tag kr">한국</span><div class="item-title" onclick="openNaver('노인 장기요양보험 커뮤니티케어')">노인 장기요양보험 개편과 커뮤니티케어 전환</div><div class="item-meta">보건복지부 관련 뉴스 검색</div></div>
+          <div class="news-item"><span class="tag sw">사회복지</span><div class="item-title" onclick="openNaver('기초생활보장 부양의무자 기준 폐지')">기초생활보장과 부양의무자 기준 변화</div><div class="item-meta">국회·복지정책 뉴스 검색</div></div>
+          <div class="news-item"><span class="tag us">미국</span><div class="item-title" onclick="openNaver('Medicaid budget cuts vulnerable populations')">메디케이드 예산 논쟁과 취약계층 의료접근권</div><div class="item-meta">미국 복지정책 뉴스 검색</div></div>
+          <div class="news-item"><span class="tag biz">경영학</span><div class="item-title" onclick="openScholar('ESG corporate social responsibility measurement')">ESG 공시와 기업 사회적 책임 측정 방법론</div><div class="item-meta">Google Scholar 검색</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><div><h2>화제의 연구 아이디어</h2><p>논문 검색으로 바로 이어지는 연구 주제 큐레이션</p></div></div>
+          <div class="research-item"><div class="item-meta">Social Policy · Comparative Welfare</div><div class="item-title" onclick="openScholar('Universal Basic Income Finland Canada Kenya longitudinal mental health labor market')">UBI 실험 비교: 정신건강, 노동참여, 사회적 신뢰</div><div class="item-summary">핀란드·캐나다·케냐 등 국가 간 실험 설계를 비교하는 종단 연구 주제.</div><div class="tags"><span class="mini-tag">UBI</span><span class="mini-tag">정신건강</span><span class="mini-tag">비교복지</span></div></div>
+          <div class="research-item"><div class="item-meta">Gerontology · Digital Health</div><div class="item-title" onclick="openScholar('digital social isolation older adults depression cohort')">디지털 사회적 고립과 노인 우울</div><div class="item-summary">대면접촉 감소, 플랫폼 사용, 사회적 지지의 상호작용을 분석할 수 있는 주제.</div><div class="tags"><span class="mini-tag">노인건강</span><span class="mini-tag">디지털 격차</span></div></div>
+          <div class="research-item"><div class="item-meta">Community Welfare · Case Management</div><div class="item-title" onclick="openScholar('community welfare center integrated case management effectiveness Korea')">지역사회복지관 통합사례관리 효과성</div><div class="item-summary">지역 인프라 격차를 조절변수로 설정하기 좋은 응용 연구 주제.</div><div class="tags"><span class="mini-tag">지역사회</span><span class="mini-tag">사례관리</span></div></div>
+        </div>
+      </div>
+
+      <div class="grid equal section">
+        <div class="card compact">
+          <div class="card-title"><div><h2>PS1 부경대 사회복지학 유튜브</h2><p>전공 공식 채널</p></div></div>
+          <div class="youtube-card"><div class="yt-icon">▶</div><div><b>PS1 PKNU</b><small>부경대학교 사회복지학 전공 공식 채널</small></div><a class="btn-red" href="https://www.youtube.com/@PS1PKNU" target="_blank">채널 열기</a></div>
+        </div>
+        <div class="card compact">
+          <div class="card-title"><div><h2>부경대 사회복지학 전공</h2><p>학과 공식 홈페이지</p></div></div>
+          <a class="quick-link" href="https://icms.pknu.ac.kr/ps1/1" target="_blank"><div><b>국립부경대학교 사회복지학 전공</b><small>학부·전공 소개와 공지 확인</small></div><span class="arrow">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-welfare" class="tab">
+      <div class="grid four section">
+        <div class="kpi"><strong>312만</strong><span>기초생활수급자</span><em class="up">▲ 2.1%</em><div class="source">보건복지부 기준값 확인 필요</div></div>
+        <div class="kpi"><strong>243조</strong><span>복지 예산</span><em class="up">▲ 5.8%</em><div class="source">기획재정부 기준값 확인 필요</div></div>
+        <div class="kpi"><strong>87.4%</strong><span>서비스 이용률</span><em class="down">▼ 0.3%</em><div class="source">조사명·연도 명시 권장</div></div>
+        <div class="kpi"><strong>1,142만</strong><span>노인 인구</span><em class="up">▲ 4.2%</em><div class="source">통계청 장래인구추계 확인 필요</div></div>
+      </div>
+      <div class="grid equal section">
+        <div class="card"><div class="card-title"><div><h2>복지 예산 연도별 추이</h2><p>단위: 조원</p></div></div><div class="chart-wrap"><canvas id="budgetChart"></canvas></div></div>
+        <div class="card"><div class="card-title"><div><h2>복지 유형별 예산 비중</h2><p>대시보드 시각화 예시</p></div></div><div class="chart-wrap"><canvas id="typeChart"></canvas></div></div>
+        <div class="card"><div class="card-title"><div><h2>지역별 복지 수급자 수</h2><p>단위: 만 명</p></div></div><div class="chart-wrap tall"><canvas id="regionChart"></canvas></div></div>
+        <div class="card"><div class="card-title"><div><h2>노인 복지 서비스 이용률</h2><p>단위: %</p></div></div><div class="chart-wrap"><canvas id="elderChart"></canvas></div></div>
+      </div>
+      <div class="card section">
+        <div class="card-title"><div><h2>지방재정·자원봉사 확장 지표</h2><p>지방재정365, 1365, VMS 등 외부 링크 기반 지표 모듈</p></div><a class="pill-link pill-ghost" style="background:#F8FAFD;color:var(--blue);border-color:#DDEBFA" href="https://www.lofin365.go.kr/" target="_blank">지방재정365</a></div>
+        <div class="grid equal">
+          <div><div class="small-label">Local welfare budget</div><div class="chart-wrap"><canvas id="lofinChart1"></canvas></div></div>
+          <div><div class="small-label">Financial independence</div><div class="chart-wrap"><canvas id="lofinChart2"></canvas></div></div>
+          <div><div class="small-label">Volunteer participation</div><div class="chart-wrap"><canvas id="volsChart1"></canvas></div></div>
+          <div><div class="small-label">Volunteer fields</div><div class="chart-wrap"><canvas id="volsChart2"></canvas></div></div>
+        </div>
+        <div class="source">※ 현재 그래프 값은 대시보드 예시값입니다. 공개 전 원자료 파일/API와 연결하면 자동 업데이트형으로 확장할 수 있습니다.</div>
+      </div>
+    </section>
+
+    <section id="tab-research" class="tab">
+      <div class="card section">
+        <div class="card-title"><div><h2>분야별 Google Scholar 바로 검색</h2><p>교수님의 관심 분야별 검색 쿼리를 빠르게 실행합니다.</p></div></div>
+        <div class="hero-actions" style="margin-top:0">
+          <a class="pill-link pill-primary" style="background:var(--navy);color:#fff" href="https://scholar.google.com/scholar?q=사회복지+2026" target="_blank">사회복지학</a>
+          <a class="pill-link pill-ghost" style="background:#fff;color:var(--blue);border-color:#DDEBFA" href="https://scholar.google.com/scholar?q=AI+social+welfare+2026" target="_blank">AI × 복지</a>
+          <a class="pill-link pill-ghost" style="background:#fff;color:var(--blue);border-color:#DDEBFA" href="https://scholar.google.com/scholar?q=노인건강+지역사회+2026" target="_blank">노인건강</a>
+          <a class="pill-link pill-ghost" style="background:#fff;color:var(--blue);border-color:#DDEBFA" href="https://scholar.google.com/scholar?q=local+government+finance+social+welfare" target="_blank">지방재정</a>
+          <a class="pill-link pill-ghost" style="background:#fff;color:var(--blue);border-color:#DDEBFA" href="https://scholar.google.com/scholar?q=photovoice+community+health+social+welfare" target="_blank">포토보이스</a>
+        </div>
+      </div>
+      <div class="grid equal section">
+        <div class="card"><div class="card-title"><div><h2>추천 연구 주제</h2><p>검색형 연구 아이디어 카드</p></div></div>
+          <div class="research-item"><div class="item-meta">Social Science & Medicine · Health inequality</div><div class="item-title" onclick="openScholar('social determinants of health inequality meta analysis Europe housing insecurity')">건강불평등의 사회결정요인과 주거 불안정</div><div class="item-summary">소득·교육·주거 안정성이 건강 결과에 미치는 상대적 영향력을 비교하는 메타분석 주제.</div><div class="tags"><span class="mini-tag">건강불평등</span><span class="mini-tag">사회결정요인</span></div></div>
+          <div class="research-item"><div class="item-meta">Digital intervention · RCT</div><div class="item-title" onclick="openScholar('digital CBT anxiety depression randomized controlled trial cost effectiveness')">디지털 CBT와 비용효과성</div><div class="item-summary">앱 기반 심리개입의 접근성, 비용, 지속효과를 검토하는 연구 주제.</div><div class="tags"><span class="mini-tag">디지털치료</span><span class="mini-tag">RCT</span></div></div>
+          <div class="research-item"><div class="item-meta">Nonprofit management · Organizational behavior</div><div class="item-title" onclick="openScholar('psychological safety nonprofit innovation organizational behavior')">비영리 조직의 심리적 안전감과 혁신 행동</div><div class="item-summary">복지기관·비영리조직에서 조직문화와 혁신성과를 연결하는 연구 주제.</div><div class="tags"><span class="mini-tag">조직행동</span><span class="mini-tag">비영리</span></div></div>
+        </div>
+        <div class="card"><div class="card-title"><div><h2>연구 키워드 맵</h2><p>Dr.5 연구 허브의 핵심 키워드</p></div></div>
+          <div class="interest-list">
+            <div class="interest"><span class="emoji">🤖</span><div><b>AI & Social Welfare</b><small>사회복지 실천·정책·교육에서의 인공지능 활용</small></div></div>
+            <div class="interest"><span class="emoji">🏥</span><div><b>Health Information & Elder Health</b><small>건강정보 접근성, 노인건강, 디지털 격차</small></div></div>
+            <div class="interest"><span class="emoji">🏛️</span><div><b>Local Finance & Community Care</b><small>지방재정, 지역사회 통합돌봄, 전달체계</small></div></div>
+            <div class="interest"><span class="emoji">📷</span><div><b>Photovoice Methodology</b><small>참여적 연구방법, 지역사회 기반 질적 연구</small></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-dr5" class="tab">
+      <div class="card section">
+        <div class="profile"><div class="avatar">5</div><div><h2>오영삼 교수 <span style="font-size:15px;color:#7D8897;font-weight:600">Dr. Young-Sam Oh</span></h2><p>국립부경대학교 사회복지학 전공<br />Pukyong National University · Department of Social Welfare</p><div class="hero-actions"><a class="pill-link pill-primary" style="background:var(--navy);color:#fff" href="https://sites.google.com/view/50325/home" target="_blank">Dr.5 홈페이지</a><a class="pill-link pill-ghost" style="background:#fff;color:var(--blue);border-color:#DDEBFA" href="https://scholar.google.com/citations?user=NvKC9dQAAAAJ&hl=ko" target="_blank">Scholar Profile</a></div></div></div>
+      </div>
+      <div class="grid equal section">
+        <div class="card"><div class="card-title"><div><h2>Dr.5 홈페이지 바로가기</h2><p>주요 페이지 빠른 이동</p></div></div>
+          <div class="quick-links">
+            <a class="quick-link" href="https://sites.google.com/view/50325/home" target="_blank"><div><b>🏠 Home</b><small>대표 페이지</small></div><span class="arrow">→</span></a>
+            <a class="quick-link" href="https://sites.google.com/view/50325/biography" target="_blank"><div><b>👤 Biography</b><small>약력</small></div><span class="arrow">→</span></a>
+            <a class="quick-link" href="https://sites.google.com/view/50325/publications" target="_blank"><div><b>📄 Publications</b><small>논문·저작</small></div><span class="arrow">→</span></a>
+            <a class="quick-link" href="https://sites.google.com/view/50325/research-grants" target="_blank"><div><b>💰 Grants</b><small>연구비</small></div><span class="arrow">→</span></a>
+            <a class="quick-link" href="https://sites.google.com/view/50325/professional-experiences" target="_blank"><div><b>🏆 Experiences</b><small>전문 활동</small></div><span class="arrow">→</span></a>
+            <a class="quick-link" href="https://sites.google.com/view/50325/youtube_channel" target="_blank"><div><b>▶ YouTube</b><small>영상 채널</small></div><span class="arrow">→</span></a>
+          </div>
+        </div>
+        <div class="card"><div class="card-title"><div><h2>개인 채널</h2><p>연구와 강의 콘텐츠 연결</p></div></div>
+          <div class="youtube-card"><div class="yt-icon">▶</div><div><b>Dr.50325</b><small>오영삼 교수 개인 유튜브 채널</small></div><a class="btn-red" href="https://www.youtube.com/@dr.50325" target="_blank">열기</a></div>
+          <div style="height:12px"></div>
+          <a class="quick-link" href="https://scholar.google.com/citations?user=NvKC9dQAAAAJ&hl=ko" target="_blank"><div><b>Google Scholar : 오영삼</b><small>논문·인용·공동연구 네트워크 확인</small></div><span class="arrow">→</span></a>
+          <div style="height:12px"></div>
+          <div class="footnote"><b>주요 키워드</b><br />Photovoice · AI & Social Welfare · Elder Health · Local Finance · Community Care · Health Information</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const CITIES={busan:{name:'부산',lat:35.1796,lon:129.0756},seoul:{name:'서울',lat:37.5665,lon:126.9780},daegu:{name:'대구',lat:35.8714,lon:128.6014}};
+    const WX_ICONS={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌧️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'❄️',73:'❄️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
+    const WX_DESC={0:'맑음',1:'대체로 맑음',2:'구름 조금',3:'흐림',45:'안개',48:'안개',51:'이슬비',53:'이슬비',55:'이슬비',61:'비',63:'비',65:'강한 비',71:'눈',73:'눈',75:'강한 눈',80:'소나기',81:'소나기',82:'강한 소나기',95:'뇌우',96:'뇌우',99:'강한 뇌우'};
+    let wxCache={},currentCity='busan',chartsInited=false;
+
+    async function fetchWeather(city){
+      if(wxCache[city])return wxCache[city];
+      const c=CITIES[city];
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max&current_weather=true&past_days=1&forecast_days=11&timezone=Asia%2FSeoul`;
+      const res=await fetch(url);
+      if(!res.ok)throw new Error('weather failed');
+      const data=await res.json();
+      wxCache[city]=data;
+      return data;
+    }
+
+    function setCityButtons(city){
+      ['busan','daegu','seoul'].forEach(id=>document.getElementById('wBtn-'+id)?.classList.toggle('active',id===city));
+    }
+    function showCity(city){currentCity=city;setCityButtons(city);renderWeather(city)}
+
+    async function renderWeather(city){
+      const el=document.getElementById('weatherContent');
+      el.innerHTML='<div class="footnote">날씨 불러오는 중...</div>';
+      try{
+        const data=await fetchWeather(city),cw=data.current_weather,daily=data.daily,days=['일','월','화','수','목','금','토'];
+        const icon=code=>WX_ICONS[code]||'🌡️',desc=code=>WX_DESC[code]||'날씨 정보';
+        let forecast='';
+        for(let i=1;i<=11&&i<daily.time.length;i++){
+          const d=new Date(daily.time[i]);
+          const isToday=i===1;
+          const label=isToday?'오늘':`${d.getMonth()+1}/${d.getDate()}<br><span>(${days[d.getDay()]})</span>`;
+          forecast+=`<div class="day ${isToday?'today':''}"><div class="d">${label}</div><div class="i">${icon(daily.weathercode[i])}</div><div class="hi">${Math.round(daily.temperature_2m_max[i])}°</div><div class="lo">${Math.round(daily.temperature_2m_min[i])}°</div><div class="rain">💧${daily.precipitation_probability_max[i]}%</div></div>`;
+        }
+        const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+        el.innerHTML=`<div class="weather-current"><div class="icon">${icon(cw.weathercode)}</div><div><div class="temp">${Math.round(cw.temperature)}°C</div><div class="desc">${desc(cw.weathercode)} · ${CITIES[city].name}<br>바람 ${cw.windspeed}km/h · 최고 ${Math.round(daily.temperature_2m_max[1])}° / 최저 ${Math.round(daily.temperature_2m_min[1])}°</div></div><div class="badge">Live</div></div><div class="footnote" style="margin-bottom:12px">어제 ${yesterday.getMonth()+1}/${yesterday.getDate()} (${days[yesterday.getDay()]}) · ${icon(daily.weathercode[0])} ${desc(daily.weathercode[0])} · 최고 ${Math.round(daily.temperature_2m_max[0])}° / 최저 ${Math.round(daily.temperature_2m_min[0])}°</div><div class="small-label">10-day forecast</div><div class="forecast">${forecast}</div>`;
+      }catch(e){el.innerHTML='<div class="footnote">날씨 정보를 불러올 수 없습니다. 네트워크 또는 API 상태를 확인해 주세요.</div>'}
+    }
+
+    function switchTab(id,btn){
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+      document.getElementById('tab-'+id).classList.add('active');
+      btn.classList.add('active');
+      if(id==='welfare')setTimeout(initCharts,80);
+      if(id==='home')renderWeather(currentCity);
+    }
+    function handleSearch(e){if(e.key==='Enter'){const q=e.target.value.trim();if(q)window.open('https://scholar.google.com/scholar?q='+encodeURIComponent(q),'_blank')}}
+    function openScholar(q){window.open('https://scholar.google.com/scholar?q='+encodeURIComponent(q),'_blank')}
+    function openNaver(q){window.open('https://search.naver.com/search.naver?where=news&query='+encodeURIComponent(q),'_blank')}
+    function updateClock(){const now=new Date(),days=['일','월','화','수','목','금','토'];document.getElementById('clock').textContent=[now.getHours(),now.getMinutes(),now.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');document.getElementById('cdate').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]})`}
+    setInterval(updateClock,1000);updateClock();renderWeather('busan');
+
+    function baseOptions(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{color:'#EEF1F5'}}}}}
+    function initCharts(){
+      if(chartsInited)return;chartsInited=true;
+      const yr=['2018','2019','2020','2021','2022','2023','2024'];
+      new Chart(document.getElementById('budgetChart'),{type:'line',data:{labels:yr,datasets:[{data:[144,162,181,199,217,230,243],borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,.10)',fill:true,tension:.4,pointBackgroundColor:'#185FA5',pointRadius:4}]},options:{...baseOptions(),scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{min:120,ticks:{font:{size:11},callback:v=>v+'조'},grid:{color:'#EEF1F5'}}}}});
+      new Chart(document.getElementById('typeChart'),{type:'doughnut',data:{labels:['노인복지','기초생활','아동·보육','장애인','기타'],datasets:[{data:[32,28,22,13,5],backgroundColor:['#378ADD','#7F77DD','#1D9E75','#EF9F27','#D4537E'],borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:10}}},cutout:'66%'}});
+      new Chart(document.getElementById('regionChart'),{type:'bar',data:{labels:['경기','서울','부산','경남','인천','대구'],datasets:[{data:[68,52,31,24,21,19],backgroundColor:'#7F77DD',borderRadius:8}]},options:{...baseOptions(),indexAxis:'y',scales:{x:{ticks:{font:{size:11},callback:v=>v+'만'},grid:{color:'#EEF1F5'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+      new Chart(document.getElementById('elderChart'),{type:'line',data:{labels:yr,datasets:[{data:[71,74,76,80,83,86,87],borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.10)',fill:true,tension:.4,pointBackgroundColor:'#1D9E75',pointRadius:4}]},options:{...baseOptions(),scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{min:60,max:95,ticks:{font:{size:11},callback:v=>v+'%'},grid:{color:'#EEF1F5'}}}}});
+      new Chart(document.getElementById('lofinChart1'),{type:'bar',data:{labels:yr,datasets:[{data:[30.1,31.4,32.8,33.9,34.6,35.2,35.8],backgroundColor:'#185FA5',borderRadius:8}]},options:{...baseOptions(),scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{min:26,ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'#EEF1F5'}}}}});
+      new Chart(document.getElementById('lofinChart2'),{type:'line',data:{labels:yr,datasets:[{data:[46.8,46.0,45.2,44.8,44.1,43.8,43.3],borderColor:'#EF9F27',backgroundColor:'rgba(239,159,39,.12)',fill:true,tension:.4,pointRadius:3}]},options:{...baseOptions(),scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{min:40,max:50,ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'#EEF1F5'}}}}});
+      new Chart(document.getElementById('volsChart1'),{type:'line',data:{labels:yr,datasets:[{data:[1842,1737,1133,1059,1192,1375,1580],borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.10)',fill:true,tension:.4,pointRadius:3}]},options:{...baseOptions(),scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{min:800,ticks:{font:{size:10},callback:v=>v+'만'},grid:{color:'#EEF1F5'}}}}});
+      new Chart(document.getElementById('volsChart2'),{type:'doughnut',data:{labels:['사회복지','환경·위생','교육','공공행정','기타'],datasets:[{data:[38,19,17,12,14],backgroundColor:['#378ADD','#1D9E75','#7F77DD','#EF9F27','#D4537E'],borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10}}},cutout:'62%'}});
+    }
+  </script>
+</body>
+</html>
