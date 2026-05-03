@@ -6,6 +6,7 @@
   <title>사회복지 데이터 시각화 대시보드</title>
   <meta name="description" content="사회복지학 학생 및 연구자를 위한 한국 사회복지 통계 기반 데이터 시각화 대시보드" />
   <meta name="author" content="Social Welfare Data Dashboard" />
+  <link rel="preload" as="image" href="신화로고그림.jpg" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -196,6 +197,47 @@
       font-size: clamp(1rem, 1.5vw, 1.2rem);
       margin: 0 0 1.4rem;
       max-width: 760px;
+    }
+
+
+    .myth-hero-image {
+      margin-top: 1.35rem;
+      position: relative;
+      z-index: 1;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(219, 228, 238, 0.9);
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
+      background: #f3eadb;
+      min-height: 240px;
+    }
+
+    .myth-hero-image img {
+      width: 100%;
+      height: clamp(260px, 34vw, 420px);
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    .myth-hero-caption {
+      position: absolute;
+      left: 1rem;
+      bottom: 1rem;
+      max-width: min(520px, calc(100% - 2rem));
+      padding: 0.75rem 0.9rem;
+      border-radius: 16px;
+      background: rgba(23, 32, 51, 0.76);
+      color: white;
+      backdrop-filter: blur(10px);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .myth-hero-caption strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 0.15rem;
     }
 
     .hero-actions {
@@ -605,6 +647,15 @@
           수급자 규모, 복지 예산, 서비스 이용률, 지역별 분포와 복지 유형별 비중을 통합적으로 살펴볼 수 있는
           학술형 대시보드입니다. 사회복지학 수업, 세미나, 기초 연구 설계, 정책 토론 자료로 활용할 수 있도록 구성했습니다.
         </p>
+
+        <figure class="myth-hero-image" aria-label="홈페이지 메인 이미지">
+          <img src="신화로고그림.jpg" alt="횃불을 든 인물이 다른 인물에게 빛을 전하는 신화적 분위기의 일러스트" />
+          <figcaption class="myth-hero-caption">
+            <strong>지식과 돌봄을 연결하는 사회복지 데이터</strong>
+            데이터 시각화를 통해 복지 현장의 변화와 지역사회 문제를 더 명확하게 이해합니다.
+          </figcaption>
+        </figure>
+
         <div class="hero-actions">
           <a class="btn btn-primary" href="#dashboard">대시보드 보기</a>
           <a class="btn btn-ghost" href="#today">오늘의 날씨·뉴스</a>
