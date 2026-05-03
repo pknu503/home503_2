@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>사회복지 데이터 시각화 대시보드</title>
+  <meta name="description" content="사회복지학 학생 및 연구자를 위한 한국 사회복지 통계 기반 데이터 시각화 대시보드" />
+  <meta name="author" content="Social Welfare Data Dashboard" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-2: #eef3f8;
+      --text: #172033;
+      --muted: #64748b;
+      --line: #dbe4ee;
+      --primary: #1f5f8b;
+      --primary-2: #2f7dbd;
+      --accent: #0f766e;
+      --warning: #b7791f;
+      --danger: #b91c1c;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+      --radius: 22px;
+      --radius-sm: 14px;
+      --max: 1280px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 15% 5%, rgba(47, 125, 189, 0.13), transparent 32%),
+        radial-gradient(circle at 85% 0%, rgba(15, 118, 110, 0.12), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .skip {
+      position: absolute;
+      left: -999px;
+      top: 10px;
+      background: var(--text);
+      color: white;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      z-index: 1000;
+    }
+
+    .skip:focus {
+      left: 10px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(246, 248, 251, 0.82);
+      border-bottom: 1px solid rgba(219, 228, 238, 0.8);
+    }
+
+    .nav {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0.9rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: grid;
+      place-items: center;
+      color: white;
+      box-shadow: 0 12px 28px rgba(31, 95, 139, 0.28);
+      font-weight: 900;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    nav a {
+      display: inline-block;
+      padding: 0.55rem 0.8rem;
+      color: var(--muted);
+      font-size: 0.94rem;
+      border-radius: 999px;
+    }
+
+    nav a:hover,
+    nav a:focus {
+      background: var(--surface);
+      color: var(--primary);
+      outline: none;
+    }
+
+    main {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+      gap: 1.4rem;
+      align-items: stretch;
+      margin-top: 1.2rem;
+    }
+
+    .hero-card,
+    .panel,
+    .kpi-card,
+    .mini-card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(219, 228, 238, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: clamp(1.6rem, 3vw, 2.6rem);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -120px;
+      bottom: -130px;
+      background: linear-gradient(135deg, rgba(47, 125, 189, 0.18), rgba(15, 118, 110, 0.13));
+      border-radius: 50%;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.86rem;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: clamp(2.15rem, 5vw, 4.6rem);
+      line-height: 1.08;
+      letter-spacing: -0.065em;
+      margin: 0 0 1rem;
+      max-width: 850px;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      margin: 0 0 1.4rem;
+      max-width: 760px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.78rem 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 12px 22px rgba(31, 95, 139, 0.24);
+    }
+
+    .btn-ghost {
+      color: var(--primary);
+      background: var(--surface-2);
+    }
+
+    .today-panel {
+      padding: 1.15rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .today-date {
+      font-weight: 800;
+      color: var(--primary);
+      font-size: 0.98rem;
+    }
+
+    .weather-big {
+      padding: 1rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #edf6ff, #edfdfa);
+      border: 1px solid #d7e9f7;
+    }
+
+    .weather-temp {
+      font-size: 2.4rem;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      margin: 0.3rem 0;
+    }
+
+    .source-note {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    section {
+      margin-top: 2.2rem;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+      letter-spacing: -0.04em;
+    }
+
+    .section-head p {
+      margin: 0.25rem 0 0;
+      color: var(--muted);
+      max-width: 720px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 0.55rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    select,
+    input {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: white;
+      color: var(--text);
+      padding: 0.62rem 0.85rem;
+      font: inherit;
+      min-width: 140px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi-card {
+      padding: 1.1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(31, 95, 139, 0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.92rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .kpi-value {
+      font-size: clamp(1.45rem, 2.4vw, 2.25rem);
+      font-weight: 900;
+      letter-spacing: -0.045em;
+    }
+
+    .kpi-delta {
+      display: inline-flex;
+      margin-top: 0.7rem;
+      padding: 0.25rem 0.52rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--accent);
+      background: rgba(15, 118, 110, 0.09);
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 1rem;
+    }
+
+    .panel {
+      padding: 1.1rem;
+      min-height: 390px;
+    }
+
+    .panel h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-subtitle {
+      color: var(--muted);
+      margin: 0.15rem 0 1rem;
+      font-size: 0.9rem;
+    }
+
+    .chart-wrap {
+      height: 310px;
+      position: relative;
+    }
+
+    .region-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .insight {
+      padding: 0.9rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: #fbfdff;
+    }
+
+    .insight strong {
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .cards-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .mini-card {
+      padding: 1rem;
+      min-height: 190px;
+    }
+
+    .mini-card h3 {
+      margin: 0 0 0.7rem;
+      font-size: 1.03rem;
+    }
+
+    .news-list,
+    .research-list {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .item {
+      padding: 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: #fbfdff;
+    }
+
+    .item a {
+      color: var(--primary);
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .item-meta {
+      margin-top: 0.35rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.22rem 0.5rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-right: 0.3rem;
+    }
+
+    .data-table {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    th {
+      background: #f2f6fb;
+      color: #334155;
+      font-weight: 900;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding: 2rem 1.25rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.92rem;
+    }
+
+    .loading {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .status-ok {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .status-warn {
+      color: var(--warning);
+      font-weight: 800;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .chart-grid,
+      .region-grid,
+      .cards-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .panel {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 660px) {
+      .nav {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      nav ul {
+        justify-content: flex-start;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .chart-wrap {
+        height: 260px;
+      }
+    }
+
+    @media print {
+      header,
+      .hero-actions,
+      .toolbar {
+        display: none;
+      }
+
+      body {
+        background: white;
+      }
+
+      .panel,
+      .kpi-card,
+      .mini-card,
+      .hero-card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">본문으로 이동</a>
+
+  <header>
+    <div class="nav" role="navigation" aria-label="주요 메뉴">
+      <a class="brand" href="#top" aria-label="사회복지 데이터 시각화 대시보드 홈">
+        <span class="brand-mark">SW</span>
+        <span>사회복지 데이터 대시보드</span>
+      </a>
+      <nav>
+        <ul>
+          <li><a href="#dashboard">대시보드</a></li>
+          <li><a href="#regions">지역 분석</a></li>
+          <li><a href="#today">오늘의 정보</a></li>
+          <li><a href="#research">연구 동향</a></li>
+          <li><a href="#data">샘플 데이터</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="top" class="hero" aria-labelledby="hero-title">
+      <div class="hero-card">
+        <span class="eyebrow">한국 사회복지 통계 기반 · 교육/연구용 샘플</span>
+        <h1 id="hero-title">사회복지 지표를 한눈에 읽는 데이터 시각화 홈페이지</h1>
+        <p class="lead">
+          수급자 규모, 복지 예산, 서비스 이용률, 지역별 분포와 복지 유형별 비중을 통합적으로 살펴볼 수 있는
+          학술형 대시보드입니다. 사회복지학 수업, 세미나, 기초 연구 설계, 정책 토론 자료로 활용할 수 있도록 구성했습니다.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#dashboard">대시보드 보기</a>
+          <a class="btn btn-ghost" href="#today">오늘의 날씨·뉴스</a>
+          <button class="btn btn-ghost" type="button" onclick="window.print()">보고서로 인쇄</button>
+        </div>
+      </div>
+
+      <aside class="today-panel" aria-label="오늘 요약">
+        <div>
+          <div class="today-date" id="todayDate">오늘 날짜 불러오는 중</div>
+          <div class="source-note">기본 위치: 서울특별시 · GitHub Pages 정적 사이트용 구성</div>
+        </div>
+        <div class="weather-big">
+          <div class="badge">오늘의 날씨</div>
+          <div class="weather-temp" id="weatherTemp">--℃</div>
+          <div id="weatherDesc">날씨 정보를 불러오는 중입니다.</div>
+          <div class="source-note" id="weatherMeta">Open-Meteo API 연결 대기</div>
+        </div>
+        <div class="insight">
+          <strong>오늘의 활용 질문</strong>
+          <span>지역별 서비스 이용률 차이가 예산 규모와 어느 정도 관련되는지 탐색해 보세요.</span>
+        </div>
+      </aside>
+    </section>
+
+    <section id="dashboard" aria-labelledby="dashboard-title">
+      <div class="section-head">
+        <div>
+          <h2 id="dashboard-title">핵심 복지 지표</h2>
+          <p>한국 사회복지 통계의 구조를 참고한 현실감 있는 가상 데이터입니다. 실제 분석에는 공공데이터포털, 보건복지부, 통계청 자료로 교체하세요.</p>
+        </div>
+        <div class="toolbar" aria-label="연도 선택">
+          <label for="yearSelect" class="source-note">기준 연도</label>
+          <select id="yearSelect">
+            <option value="2025" selected>2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="kpi-grid" aria-label="KPI 카드">
+        <article class="kpi-card">
+          <div class="kpi-label">총 수급자 수</div>
+          <div class="kpi-value" id="kpiRecipients">--</div>
+          <div class="kpi-delta" id="kpiRecipientsDelta">전년 대비 --</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-label">복지 예산</div>
+          <div class="kpi-value" id="kpiBudget">--</div>
+          <div class="kpi-delta" id="kpiBudgetDelta">전년 대비 --</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-label">서비스 이용률</div>
+          <div class="kpi-value" id="kpiUseRate">--</div>
+          <div class="kpi-delta" id="kpiUseRateDelta">전년 대비 --</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-label">사례관리 완료율</div>
+          <div class="kpi-value" id="kpiCaseRate">--</div>
+          <div class="kpi-delta" id="kpiCaseRateDelta">전년 대비 --</div>
+        </article>
+      </div>
+
+      <div class="chart-grid" style="margin-top: 1rem;">
+        <article class="panel">
+          <h3>연도별 복지 예산 및 수급자 변화</h3>
+          <p class="panel-subtitle">2018~2025년 추이. 예산은 조 원, 수급자 수는 만 명 단위입니다.</p>
+          <div class="chart-wrap">
+            <canvas id="trendChart" aria-label="연도별 복지 예산 및 수급자 변화 선 그래프"></canvas>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>복지 유형별 비중</h3>
+          <p class="panel-subtitle">노인·장애인·아동·기초생활·지역사회 서비스 구성비</p>
+          <div class="chart-wrap">
+            <canvas id="typeChart" aria-label="복지 유형별 비중 도넛 차트"></canvas>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="regions" aria-labelledby="regions-title">
+      <div class="section-head">
+        <div>
+          <h2 id="regions-title">지역별 복지 서비스 현황</h2>
+          <p>시·도별 서비스 이용률과 수급자 규모를 함께 확인하여 지역 격차와 정책 우선순위를 검토할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="region-grid">
+        <article class="panel">
+          <h3>시·도별 서비스 이용률</h3>
+          <p class="panel-subtitle">단위: %</p>
+          <div class="chart-wrap">
+            <canvas id="regionChart" aria-label="지역별 복지 서비스 이용률 막대 그래프"></canvas>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>분석 메모</h3>
+          <p class="panel-subtitle">교육 및 연구 토론을 위한 해석 예시</p>
+          <div class="insight-list">
+            <div class="insight">
+              <strong>지역 격차 관찰</strong>
+              <span>광역시와 도 지역 간 서비스 접근성 차이를 가정하여 이용률의 분산을 배치했습니다.</span>
+            </div>
+            <div class="insight">
+              <strong>정책 질문</strong>
+              <span>이용률이 낮은 지역은 예산 부족, 전달체계 접근성, 정보 격차 중 어떤 요인이 더 클까요?</span>
+            </div>
+            <div class="insight">
+              <strong>연구 설계 아이디어</strong>
+              <span>지역 재정자립도, 고령화율, 사회복지시설 밀도 변수를 추가하면 다층모형 또는 패널분석 실습으로 확장할 수 있습니다.</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="today" aria-labelledby="today-title">
+      <div class="section-head">
+        <div>
+          <h2 id="today-title">오늘의 날씨와 주요 뉴스</h2>
+          <p>정적 홈페이지에서 실시간성을 갖도록 날씨는 Open-Meteo, 뉴스는 GDELT 공개 검색 API를 우선 호출합니다. 실패 시 예시 콘텐츠를 표시합니다.</p>
+        </div>
+        <div class="toolbar">
+          <input id="newsQuery" type="search" value="social welfare OR aging OR poverty OR health policy" aria-label="뉴스 검색어" />
+          <button class="btn btn-primary" type="button" id="refreshNews">뉴스 새로고침</button>
+        </div>
+      </div>
+
+      <div class="cards-3">
+        <article class="mini-card">
+          <h3>날씨 상세</h3>
+          <div id="weatherDetails" class="loading">서울 기준 날씨를 불러오고 있습니다.</div>
+          <button class="btn btn-ghost" type="button" id="useMyLocation" style="margin-top: 0.8rem;">내 위치 날씨 보기</button>
+        </article>
+        <article class="mini-card" style="grid-column: span 2;">
+          <h3>주요 뉴스</h3>
+          <div id="newsList" class="news-list">
+            <div class="loading">주요 뉴스를 불러오는 중입니다.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="research" aria-labelledby="research-title">
+      <div class="section-head">
+        <div>
+          <h2 id="research-title">화제가 되는 연구결과: 한국·미국·유럽</h2>
+          <p>사회복지, 고령화, 건강정책, 빈곤, 지역사회 돌봄 관련 최신 학술 결과를 OpenAlex에서 검색합니다.</p>
+        </div>
+        <div class="toolbar">
+          <select id="researchRegion" aria-label="연구 지역">
+            <option value="Korea">한국</option>
+            <option value="United States">미국</option>
+            <option value="Europe">유럽</option>
+          </select>
+          <button class="btn btn-primary" type="button" id="refreshResearch">연구 새로고침</button>
+        </div>
+      </div>
+
+      <article class="panel">
+        <h3>최근 연구 목록</h3>
+        <p class="panel-subtitle">검색어: social welfare, aging, health policy, community care, poverty</p>
+        <div id="researchList" class="research-list">
+          <div class="loading">연구 결과를 불러오는 중입니다.</div>
+        </div>
+      </article>
+    </section>
+
+    <section id="data" aria-labelledby="data-title">
+      <div class="section-head">
+        <div>
+          <h2 id="data-title">샘플 데이터</h2>
+          <p>수업 및 연구방법론 실습용 가상 데이터입니다. CSV 또는 공공데이터 API로 바꾸면 실제 연구용 대시보드로 확장할 수 있습니다.</p>
+        </div>
+      </div>
+      <div class="data-table">
+        <table aria-label="사회복지 샘플 데이터 표">
+          <thead>
+            <tr>
+              <th>연도</th>
+              <th>수급자 수</th>
+              <th>복지 예산</th>
+              <th>서비스 이용률</th>
+              <th>사례관리 완료율</th>
+              <th>정책 메모</th>
+            </tr>
+          </thead>
+          <tbody id="dataRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      © <span id="footerYear"></span> Social Welfare Data Dashboard.
+      교육·연구용 데모입니다. 실제 정책 분석에는 공식 통계와 최신 원자료를 확인하세요.
+    </p>
+  </footer>
+
+  <script>
+    const fmt = new Intl.NumberFormat("ko-KR");
+    const today = new Date();
+
+    const annualData = {
+      2018: { recipients: 392, budget: 162.4, useRate: 61.2, caseRate: 72.1 },
+      2019: { recipients: 405, budget: 173.6, useRate: 62.7, caseRate: 73.4 },
+      2020: { recipients: 428, budget: 190.1, useRate: 64.8, caseRate: 74.2 },
+      2021: { recipients: 446, budget: 205.7, useRate: 66.3, caseRate: 75.8 },
+      2022: { recipients: 462, budget: 219.5, useRate: 67.5, caseRate: 77.1 },
+      2023: { recipients: 478, budget: 235.2, useRate: 69.1, caseRate: 78.0 },
+      2024: { recipients: 491, budget: 251.8, useRate: 70.4, caseRate: 79.3 },
+      2025: { recipients: 506, budget: 268.6, useRate: 72.0, caseRate: 80.5 }
+    };
+
+    const regionData = [
+      { name: "서울", useRate: 76.4, recipients: 68 },
+      { name: "부산", useRate: 72.8, recipients: 34 },
+      { name: "대구", useRate: 69.7, recipients: 25 },
+      { name: "인천", useRate: 71.5, recipients: 31 },
+      { name: "광주", useRate: 74.1, recipients: 18 },
+      { name: "대전", useRate: 73.2, recipients: 16 },
+      { name: "울산", useRate: 67.6, recipients: 11 },
+      { name: "세종", useRate: 65.9, recipients: 5 },
+      { name: "경기", useRate: 70.8, recipients: 83 },
+      { name: "강원", useRate: 68.4, recipients: 20 },
+      { name: "충북", useRate: 69.3, recipients: 18 },
+      { name: "충남", useRate: 68.9, recipients: 24 },
+      { name: "전북", useRate: 71.2, recipients: 23 },
+      { name: "전남", useRate: 70.1, recipients: 26 },
+      { name: "경북", useRate: 67.8, recipients: 32 },
+      { name: "경남", useRate: 68.7, recipients: 35 },
+      { name: "제주", useRate: 66.5, recipients: 7 }
+    ];
+
+    const typeData = [
+      { label: "노인복지", value: 32 },
+      { label: "장애인복지", value: 18 },
+      { label: "아동·청소년", value: 16 },
+      { label: "기초생활보장", value: 24 },
+      { label: "지역사회 돌봄", value: 10 }
+    ];
+
+    const fallbackNews = [
+      {
+        title: "사회복지 전달체계의 디지털 전환과 접근성 격차",
+        url: "#",
+        source: "예시 뉴스",
+        date: "API 연결 실패 시 표시되는 데모 항목"
+      },
+      {
+        title: "고령화 지역의 통합돌봄 서비스 수요 증가",
+        url: "#",
+        source: "예시 뉴스",
+        date: "검색어를 수정해 다시 시도할 수 있습니다"
+      },
+      {
+        title: "빈곤·건강 불평등 완화를 위한 지역사회 기반 개입 논의",
+        url: "#",
+        source: "예시 뉴스",
+        date: "GitHub Pages 정적 사이트용 대체 콘텐츠"
+      }
+    ];
+
+    const fallbackResearch = [
+      {
+        title: "Community care, aging in place, and social service access: a comparative review",
+        url: "#",
+        meta: "예시 연구 · 실제 OpenAlex 연결 실패 시 표시"
+      },
+      {
+        title: "Poverty, health policy, and welfare service utilization among older adults",
+        url: "#",
+        meta: "예시 연구 · 연구 검색어를 조정해 재검색 가능"
+      },
+      {
+        title: "Digital inclusion and welfare information inequality in local communities",
+        url: "#",
+        meta: "예시 연구 · 최신 연구는 OpenAlex API로 호출"
+      }
+    ];
+
+    function setDate() {
+      document.getElementById("todayDate").textContent = new Intl.DateTimeFormat("ko-KR", {
+        dateStyle: "full"
+      }).format(today);
+      document.getElementById("footerYear").textContent = today.getFullYear();
+    }
+
+    function deltaText(current, previous, suffix = "") {
+      const diff = current - previous;
+      const sign = diff >= 0 ? "+" : "";
+      return `전년 대비 ${sign}${diff.toFixed(1)}${suffix}`;
+    }
+
+    function updateKpis(year) {
+      const current = annualData[year];
+      const previous = annualData[Number(year) - 1] || current;
+
+      document.getElementById("kpiRecipients").textContent = `${fmt.format(current.recipients)}만 명`;
+      document.getElementById("kpiBudget").textContent = `${current.budget.toFixed(1)}조 원`;
+      document.getElementById("kpiUseRate").textContent = `${current.useRate.toFixed(1)}%`;
+      document.getElementById("kpiCaseRate").textContent = `${current.caseRate.toFixed(1)}%`;
+
+      document.getElementById("kpiRecipientsDelta").textContent = deltaText(current.recipients, previous.recipients, "만 명");
+      document.getElementById("kpiBudgetDelta").textContent = deltaText(current.budget, previous.budget, "조 원");
+      document.getElementById("kpiUseRateDelta").textContent = deltaText(current.useRate, previous.useRate, "%p");
+      document.getElementById("kpiCaseRateDelta").textContent = deltaText(current.caseRate, previous.caseRate, "%p");
+    }
+
+    function renderDataRows() {
+      const tbody = document.getElementById("dataRows");
+      const rows = Object.entries(annualData).reverse().map(([year, d]) => {
+        const note = Number(year) >= 2023
+          ? "지역사회 통합돌봄 및 디지털 복지서비스 확대 가정"
+          : "기초보장·돌봄서비스 수요 증가 가정";
+        return `
+          <tr>
+            <td>${year}</td>
+            <td>${fmt.format(d.recipients)}만 명</td>
+            <td>${d.budget.toFixed(1)}조 원</td>
+            <td>${d.useRate.toFixed(1)}%</td>
+            <td>${d.caseRate.toFixed(1)}%</td>
+            <td>${note}</td>
+          </tr>`;
+      }).join("");
+      tbody.innerHTML = rows;
+    }
+
+    function initCharts() {
+      const years = Object.keys(annualData);
+      const budgets = years.map(y => annualData[y].budget);
+      const recipients = years.map(y => annualData[y].recipients);
+
+      const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { font: { family: "Noto Sans KR" } } },
+          tooltip: {
+            backgroundColor: "rgba(23, 32, 51, 0.92)",
+            padding: 12,
+            titleFont: { family: "Noto Sans KR" },
+            bodyFont: { family: "Noto Sans KR" }
+          }
+        },
+        scales: {
+          x: { grid: { color: "rgba(219, 228, 238, 0.65)" } },
+          y: { grid: { color: "rgba(219, 228, 238, 0.65)" } }
+        }
+      };
+
+      new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+          labels: years,
+          datasets: [
+            {
+              label: "복지 예산(조 원)",
+              data: budgets,
+              borderColor: "#1f5f8b",
+              backgroundColor: "rgba(31, 95, 139, 0.12)",
+              tension: 0.35,
+              fill: true,
+              pointRadius: 4,
+              yAxisID: "y"
+            },
+            {
+              label: "수급자 수(만 명)",
+              data: recipients,
+              borderColor: "#0f766e",
+              backgroundColor: "rgba(15, 118, 110, 0.10)",
+              tension: 0.35,
+              fill: true,
+              pointRadius: 4,
+              yAxisID: "y1"
+            }
+          ]
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            x: commonOptions.scales.x,
+            y: {
+              type: "linear",
+              position: "left",
+              title: { display: true, text: "조 원" },
+              grid: { color: "rgba(219, 228, 238, 0.65)" }
+            },
+            y1: {
+              type: "linear",
+              position: "right",
+              title: { display: true, text: "만 명" },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+
+      new Chart(document.getElementById("typeChart"), {
+        type: "doughnut",
+        data: {
+          labels: typeData.map(d => d.label),
+          datasets: [{
+            data: typeData.map(d => d.value),
+            backgroundColor: ["#1f5f8b", "#2f7dbd", "#0f766e", "#b7791f", "#64748b"],
+            borderColor: "#ffffff",
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "62%",
+          plugins: {
+            legend: { position: "bottom", labels: { font: { family: "Noto Sans KR" } } },
+            tooltip: {
+              callbacks: {
+                label: context => `${context.label}: ${context.parsed}%`
+              }
+            }
+          }
+        }
+      });
+
+      new Chart(document.getElementById("regionChart"), {
+        type: "bar",
+        data: {
+          labels: regionData.map(d => d.name),
+          datasets: [{
+            label: "서비스 이용률(%)",
+            data: regionData.map(d => d.useRate),
+            backgroundColor: "rgba(31, 95, 139, 0.78)",
+            borderColor: "#1f5f8b",
+            borderWidth: 1,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { maxRotation: 45, minRotation: 0 }
+            },
+            y: {
+              beginAtZero: false,
+              min: 60,
+              suggestedMax: 80,
+              title: { display: true, text: "이용률(%)" },
+              grid: { color: "rgba(219, 228, 238, 0.65)" }
+            }
+          }
+        }
+      });
+    }
+
+    function weatherCodeToKorean(code) {
+      const map = {
+        0: "맑음",
+        1: "대체로 맑음",
+        2: "부분적으로 흐림",
+        3: "흐림",
+        45: "안개",
+        48: "서리 안개",
+        51: "약한 이슬비",
+        53: "이슬비",
+        55: "강한 이슬비",
+        61: "약한 비",
+        63: "비",
+        65: "강한 비",
+        71: "약한 눈",
+        73: "눈",
+        75: "강한 눈",
+        80: "약한 소나기",
+        81: "소나기",
+        82: "강한 소나기",
+        95: "뇌우"
+      };
+      return map[code] || "날씨 정보";
+    }
+
+    async function loadWeather(lat = 37.5665, lon = 126.9780, label = "서울특별시") {
+      const temp = document.getElementById("weatherTemp");
+      const desc = document.getElementById("weatherDesc");
+      const meta = document.getElementById("weatherMeta");
+      const details = document.getElementById("weatherDetails");
+
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Asia%2FSeoul`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("weather response error");
+        const data = await response.json();
+        const current = data.current;
+        const weatherText = weatherCodeToKorean(current.weather_code);
+
+        temp.textContent = `${Math.round(current.temperature_2m)}℃`;
+        desc.textContent = `${label} · ${weatherText}`;
+        meta.innerHTML = `<span class="status-ok">연결됨</span> · 체감 ${Math.round(current.apparent_temperature)}℃ · 습도 ${current.relative_humidity_2m}%`;
+        details.innerHTML = `
+          <div class="item">
+            <div><span class="badge">${label}</span><span class="badge">${weatherText}</span></div>
+            <p style="margin:0.45rem 0 0;">현재 기온 ${current.temperature_2m}℃, 체감온도 ${current.apparent_temperature}℃, 습도 ${current.relative_humidity_2m}%, 풍속 ${current.wind_speed_10m}km/h입니다.</p>
+            <div class="item-meta">자료: Open-Meteo · 업데이트 시각 ${current.time}</div>
+          </div>`;
+      } catch (error) {
+        temp.textContent = "21℃";
+        desc.textContent = "서울특별시 · 예시 날씨";
+        meta.innerHTML = `<span class="status-warn">대체 표시</span> · API 연결 실패`;
+        details.innerHTML = `
+          <div class="item">
+            <span class="badge">예시</span>
+            <p style="margin:0.45rem 0 0;">현재 기온 21℃, 체감온도 22℃, 습도 58%, 약한 바람으로 표시합니다. 실제 배포 환경에서 네트워크 정책을 확인하세요.</p>
+            <div class="item-meta">Open-Meteo 호출 실패 시 나타나는 대체 데이터</div>
+          </div>`;
+      }
+    }
+
+    function renderNews(items, isFallback = false) {
+      const list = document.getElementById("newsList");
+      list.innerHTML = items.slice(0, 5).map(item => `
+        <div class="item">
+          <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+          <div class="item-meta">
+            <span class="badge">${item.source || "News"}</span>
+            ${item.date || ""}
+            ${isFallback ? " · 대체 콘텐츠" : ""}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function loadNews() {
+      const query = encodeURIComponent(document.getElementById("newsQuery").value.trim() || "social welfare OR aging OR poverty");
+      const list = document.getElementById("newsList");
+      list.innerHTML = `<div class="loading">GDELT에서 뉴스를 검색하는 중입니다.</div>`;
+
+      try {
+        const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=ArtList&format=json&maxrecords=5&sort=HybridRel&timespan=24h`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("news response error");
+        const data = await response.json();
+        const articles = (data.articles || []).map(a => ({
+          title: a.title,
+          url: a.url,
+          source: a.sourceCountry || a.domain || "GDELT",
+          date: a.seendate ? `${a.seendate.slice(0, 4)}-${a.seendate.slice(4, 6)}-${a.seendate.slice(6, 8)}` : "최근 24시간"
+        }));
+        if (!articles.length) throw new Error("empty news");
+        renderNews(articles);
+      } catch (error) {
+        renderNews(fallbackNews, true);
+      }
+    }
+
+    function renderResearch(items, isFallback = false) {
+      const list = document.getElementById("researchList");
+      list.innerHTML = items.slice(0, 6).map(item => `
+        <div class="item">
+          <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+          <div class="item-meta">
+            ${item.meta}
+            ${isFallback ? " · 대체 콘텐츠" : ""}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function loadResearch() {
+      const region = document.getElementById("researchRegion").value;
+      const list = document.getElementById("researchList");
+      list.innerHTML = `<div class="loading">OpenAlex에서 ${region} 관련 연구를 검색하는 중입니다.</div>`;
+
+      const search = encodeURIComponent(`social welfare aging health policy community care poverty ${region}`);
+      const fromDate = `${today.getFullYear() - 1}-01-01`;
+
+      try {
+        const url = `https://api.openalex.org/works?search=${search}&filter=from_publication_date:${fromDate}&sort=cited_by_count:desc&per-page=6`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("research response error");
+        const data = await response.json();
+        const works = (data.results || []).map(work => {
+          const authors = (work.authorships || [])
+            .slice(0, 3)
+            .map(a => a.author && a.author.display_name)
+            .filter(Boolean)
+            .join(", ");
+          const venue = work.primary_location && work.primary_location.source
+            ? work.primary_location.source.display_name
+            : "OpenAlex";
+          const url = work.doi ? `https://doi.org/${work.doi.replace("https://doi.org/", "")}` : work.id;
+          return {
+            title: work.title || "제목 정보 없음",
+            url,
+            meta: `${work.publication_date || work.publication_year || "연도 미상"} · ${venue}${authors ? " · " + authors : ""} · 인용 ${work.cited_by_count || 0}회`
+          };
+        });
+        if (!works.length) throw new Error("empty research");
+        renderResearch(works);
+      } catch (error) {
+        renderResearch(fallbackResearch, true);
+      }
+    }
+
+    function bindEvents() {
+      document.getElementById("yearSelect").addEventListener("change", event => {
+        updateKpis(event.target.value);
+      });
+
+      document.getElementById("refreshNews").addEventListener("click", loadNews);
+      document.getElementById("refreshResearch").addEventListener("click", loadResearch);
+
+      document.getElementById("useMyLocation").addEventListener("click", () => {
+        if (!navigator.geolocation) {
+          alert("현재 브라우저에서 위치 기능을 지원하지 않습니다.");
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            loadWeather(position.coords.latitude, position.coords.longitude, "현재 위치");
+          },
+          () => {
+            alert("위치 권한이 허용되지 않아 서울 기준 날씨를 유지합니다.");
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+        );
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      setDate();
+      updateKpis("2025");
+      renderDataRows();
+      initCharts();
+      bindEvents();
+      loadWeather();
+      loadNews();
+      loadResearch();
+    });
+  </script>
+</body>
+</html>
