@@ -500,6 +500,47 @@
       margin-right: 0.3rem;
     }
 
+
+    .donation-summary {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .donation-meter {
+      margin-top: 0.9rem;
+      height: 16px;
+      background: #e5edf5;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .donation-meter-fill {
+      width: 52.9%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 999px;
+    }
+
+    .source-box {
+      margin-top: 0.9rem;
+      padding: 0.9rem;
+      border-radius: var(--radius-sm);
+      background: #f8fbff;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .source-box a {
+      color: var(--primary);
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     .data-table {
       overflow-x: auto;
       border-radius: var(--radius);
@@ -560,7 +601,8 @@
       .hero,
       .chart-grid,
       .region-grid,
-      .cards-3 {
+      .cards-3,
+      .donation-summary {
         grid-template-columns: 1fr;
       }
 
@@ -630,6 +672,7 @@
         <ul>
           <li><a href="#dashboard">대시보드</a></li>
           <li><a href="#regions">지역 분석</a></li>
+          <li><a href="#donation">기부통계</a></li>
           <li><a href="#today">오늘의 정보</a></li>
           <li><a href="#research">연구 동향</a></li>
           <li><a href="#data">샘플 데이터</a></li>
@@ -776,6 +819,86 @@
       </div>
     </section>
 
+
+    <section id="donation" aria-labelledby="donation-title">
+      <div class="section-head">
+        <div>
+          <h2 id="donation-title">기부통계</h2>
+          <p>
+            1365 기부포털의 기부금품모집등록단체 기부모집실적 자료를 바탕으로
+            기부 모집 현황을 요약했습니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="kpi-grid" aria-label="기부통계 KPI 카드">
+        <article class="kpi-card">
+          <div class="kpi-label">2025년 모집등록 건수</div>
+          <div class="kpi-value">354건</div>
+          <div class="kpi-delta">2025.12.31 기준</div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="kpi-label">2025년 모집목표액</div>
+          <div class="kpi-value">671,390백만 원</div>
+          <div class="kpi-delta">2025.12.31 기준</div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="kpi-label">2025년 모집완료액</div>
+          <div class="kpi-value">355,155백만 원</div>
+          <div class="kpi-delta">2026.05.03 기준</div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="kpi-label">모집목표 대비 완료율</div>
+          <div class="kpi-value">52.9%</div>
+          <div class="kpi-delta">355,155 ÷ 671,390</div>
+        </article>
+      </div>
+
+      <div class="donation-summary">
+        <article class="panel">
+          <h3>기부 모집 목표 대비 완료 현황</h3>
+          <p class="panel-subtitle">단위: 백만 원</p>
+          <div class="chart-wrap">
+            <canvas id="donationChart" aria-label="기부 모집 목표액과 완료액 비교 막대 그래프"></canvas>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3>해석 메모</h3>
+          <p class="panel-subtitle">기부통계를 사회복지 데이터 교육에 활용하는 관점</p>
+          <div class="insight-list">
+            <div class="insight">
+              <strong>목표 대비 완료율</strong>
+              <span>2025년 모집목표액 671,390백만 원 대비 모집완료액 355,155백만 원으로, 단순 계산 기준 완료율은 약 52.9%입니다.</span>
+            </div>
+            <div class="insight">
+              <strong>분석 질문</strong>
+              <span>기부 모집 실적은 경기 상황, 재난·재해 이슈, 단체 신뢰도, 온라인 캠페인 확산과 어떤 관련이 있을까요?</span>
+            </div>
+            <div class="insight">
+              <strong>확장 아이디어</strong>
+              <span>연도별 기부 모집 실적, 기부 분야, 지역, 단체 유형 변수를 추가하면 기부문화 변화 분석으로 확장할 수 있습니다.</span>
+            </div>
+          </div>
+          <div class="donation-meter" aria-label="모집목표 대비 완료율 52.9%">
+            <div class="donation-meter-fill"></div>
+          </div>
+          <div class="source-box">
+            자료: 
+            <a href="https://www.1365.go.kr/dntn/cnst/crrg/viewCntrRcritAcmslt.do" target="_blank" rel="noopener noreferrer">
+              1365 기부포털, 기부금품모집등록단체 기부모집실적
+            </a>
+            <br />
+            본 자료는 행정안전부에서 제공하는 통계정보를 활용하고 있으며, 통계기준일에 따라 타 정보와 차이가 발생할 수 있습니다.
+          </div>
+        </article>
+      </div>
+    </section>
+
+
     <section id="today" aria-labelledby="today-title">
       <div class="section-head">
         <div>
@@ -902,6 +1025,18 @@
       { label: "기초생활보장", value: 24 },
       { label: "지역사회 돌봄", value: 10 }
     ];
+
+
+    const donationData = {
+      year: 2025,
+      registeredCases: 354,
+      targetAmount: 671390,
+      completedAmount: 355155,
+      completionRate: 52.9,
+      targetBaseDate: "2025.12.31",
+      completedBaseDate: "2026.05.03"
+    };
+
 
     const fallbackNews = [
       {
@@ -1111,6 +1246,46 @@
               min: 60,
               suggestedMax: 80,
               title: { display: true, text: "이용률(%)" },
+              grid: { color: "rgba(219, 228, 238, 0.65)" }
+            }
+          }
+        }
+      });
+
+
+      new Chart(document.getElementById("donationChart"), {
+        type: "bar",
+        data: {
+          labels: ["모집목표액", "모집완료액"],
+          datasets: [{
+            label: "금액(백만 원)",
+            data: [donationData.targetAmount, donationData.completedAmount],
+            backgroundColor: ["rgba(31, 95, 139, 0.78)", "rgba(15, 118, 110, 0.78)"],
+            borderColor: ["#1f5f8b", "#0f766e"],
+            borderWidth: 1,
+            borderRadius: 10
+          }]
+        },
+        options: {
+          ...commonOptions,
+          plugins: {
+            ...commonOptions.plugins,
+            tooltip: {
+              callbacks: {
+                label: context => `${context.dataset.label}: ${fmt.format(context.parsed.y)}백만 원`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "백만 원" },
+              ticks: {
+                callback: value => fmt.format(value)
+              },
               grid: { color: "rgba(219, 228, 238, 0.65)" }
             }
           }
