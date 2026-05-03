@@ -8,6 +8,7 @@
   <meta name="author" content="Social Welfare Data Dashboard" />
   <link rel="preload" as="image" href="신화로고그림.jpg" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
     :root {
       --bg: #f6f8fb;
@@ -425,6 +426,15 @@
       position: relative;
     }
 
+
+    .chart-label-note {
+      margin-top: 0.55rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+
     .region-grid,
     .donation-summary {
       display: grid;
@@ -774,6 +784,7 @@
           <div class="chart-wrap">
             <canvas id="trendChart" aria-label="공식자료 기반 주요 복지 지표 막대 그래프"></canvas>
           </div>
+          <div class="chart-label-note">막대 위 숫자는 표시 편의를 위해 환산한 값입니다: 수급자·장애인=만 명, 예산=조 원, 어린이집=천 개소.</div>
         </article>
 
         <article class="panel">
@@ -783,6 +794,7 @@
           <div class="chart-wrap">
             <canvas id="typeChart" aria-label="자료 출처별 구성 도넛 차트"></canvas>
           </div>
+          <div class="chart-label-note">각 조각의 숫자는 해당 출처를 활용한 지표 수입니다.</div>
         </article>
       </div>
 
@@ -819,6 +831,7 @@
           <div class="chart-wrap">
             <canvas id="regionChart" aria-label="지역별 복지 서비스 이용률 막대 그래프"></canvas>
           </div>
+          <div class="chart-label-note">각 막대 위 숫자는 지역별 서비스 이용률 예시값입니다.</div>
         </article>
 
         <article class="panel">
@@ -890,6 +903,7 @@
           <div class="chart-wrap">
             <canvas id="donationChart" aria-label="기부 모집 목표액과 완료액 비교 막대 그래프"></canvas>
           </div>
+          <div class="chart-label-note">각 막대 위 숫자는 백만 원 단위입니다.</div>
         </article>
 
         <article class="panel">
@@ -1248,6 +1262,43 @@
       }, 80);
     }
 
+
+    function compactNumber(value) {
+      if (value >= 100000000) {
+        return `${(value / 100000000).toFixed(1)}억`;
+      }
+
+      if (value >= 10000) {
+        return `${Math.round(value / 10000)}만`;
+      }
+
+      return fmt.format(value);
+    }
+
+    function makeDataLabelOptions(unit = "", options = {}) {
+      return {
+        display: true,
+        color: options.color || "#172033",
+        anchor: options.anchor || "end",
+        align: options.align || "top",
+        offset: options.offset ?? 4,
+        clamp: true,
+        clip: false,
+        font: {
+          family: "Noto Sans KR",
+          weight: "800",
+          size: options.size || 11
+        },
+        formatter: value => {
+          if (options.formatter) {
+            return options.formatter(value);
+          }
+
+          return `${fmt.format(value)}${unit}`;
+        }
+      };
+    }
+
     function initCharts() {
       const commonOptions = {
         responsive: true,
@@ -1293,6 +1344,17 @@
         },
         options: {
           ...commonOptions,
+          plugins: {
+            ...commonOptions.plugins,
+            datalabels: makeDataLabelOptions("", {
+              formatter: value => fmt.format(value)
+            })
+          },
+          layout: {
+            padding: {
+              top: 24
+            }
+          },
           scales: {
             x: { grid: { display: false } },
             y: {
@@ -1319,7 +1381,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: "62%",
+          cutout: "58%",
           plugins: {
             legend: {
               position: "bottom",
@@ -1329,6 +1391,16 @@
               callbacks: {
                 label: context => `${context.label}: ${context.parsed}개 지표`
               }
+            },
+            datalabels: {
+              display: true,
+              color: "#ffffff",
+              font: {
+                family: "Noto Sans KR",
+                weight: "900",
+                size: 12
+              },
+              formatter: (value, context) => `${context.chart.data.labels[context.dataIndex]}\n${value}개`
             }
           }
         }
@@ -1351,6 +1423,17 @@
         },
         options: {
           ...commonOptions,
+          plugins: {
+            ...commonOptions.plugins,
+            datalabels: makeDataLabelOptions("%", {
+              formatter: value => `${value.toFixed(1)}%`
+            })
+          },
+          layout: {
+            padding: {
+              top: 24
+            }
+          },
           scales: {
             x: {
               grid: { display: false },
@@ -1359,7 +1442,7 @@
             y: {
               beginAtZero: false,
               min: 60,
-              suggestedMax: 80,
+              suggestedMax: 82,
               title: { display: true, text: "이용률(%)" },
               grid: { color: "rgba(219, 228, 238, 0.65)" }
             }
@@ -1390,6 +1473,14 @@
               callbacks: {
                 label: context => `${context.dataset.label}: ${fmt.format(context.parsed.y)}백만 원`
               }
+            },
+            datalabels: makeDataLabelOptions("백만 원", {
+              formatter: value => `${fmt.format(value)}백만`
+            })
+          },
+          layout: {
+            padding: {
+              top: 24
             }
           },
           scales: {
@@ -1718,6 +1809,10 @@
           }
         );
       });
+    }
+
+    if (window.ChartDataLabels) {
+      Chart.register(ChartDataLabels);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
