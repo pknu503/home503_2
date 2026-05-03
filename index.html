@@ -313,6 +313,35 @@
       margin-top: 2.2rem;
     }
 
+
+    .page-section {
+      display: none;
+      animation: fadeInPage 0.25s ease;
+    }
+
+    .page-section.active {
+      display: block;
+    }
+
+    nav a.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: #ffffff;
+      box-shadow: 0 10px 20px rgba(31, 95, 139, 0.18);
+    }
+
+    @keyframes fadeInPage {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+
     .section-head {
       display: flex;
       align-items: end;
@@ -670,19 +699,20 @@
       </a>
       <nav>
         <ul>
-          <li><a href="#dashboard">대시보드</a></li>
-          <li><a href="#regions">지역 분석</a></li>
-          <li><a href="#donation">기부통계</a></li>
-          <li><a href="#today">오늘의 정보</a></li>
-          <li><a href="#research">연구 동향</a></li>
-          <li><a href="#data">샘플 데이터</a></li>
+          <li><a href="#top" data-page="top">홈</a></li>
+          <li><a href="#dashboard" data-page="dashboard">대시보드</a></li>
+          <li><a href="#regions" data-page="regions">지역 분석</a></li>
+          <li><a href="#donation" data-page="donation">기부통계</a></li>
+          <li><a href="#today" data-page="today">오늘의 정보</a></li>
+          <li><a href="#research" data-page="research">연구 동향</a></li>
+          <li><a href="#data" data-page="data">샘플 데이터</a></li>
         </ul>
       </nav>
     </div>
   </header>
 
   <main id="main">
-    <section id="top" class="hero" aria-labelledby="hero-title">
+    <section id="top" class="hero page-section active" aria-labelledby="hero-title">
       <div class="hero-card">
         <span class="eyebrow">한국 사회복지 통계 기반 · 교육/연구용 샘플</span>
         <h1 id="hero-title">사회복지 지표를 한눈에 읽는 데이터 시각화 홈페이지</h1>
@@ -700,8 +730,8 @@
         </figure>
 
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#dashboard">대시보드 보기</a>
-          <a class="btn btn-ghost" href="#today">오늘의 날씨·뉴스</a>
+          <a class="btn btn-primary" href="#dashboard" data-page="dashboard">대시보드 보기</a>
+          <a class="btn btn-ghost" href="#today" data-page="today">오늘의 날씨·뉴스</a>
           <button class="btn btn-ghost" type="button" onclick="window.print()">보고서로 인쇄</button>
         </div>
       </div>
@@ -724,7 +754,7 @@
       </aside>
     </section>
 
-    <section id="dashboard" aria-labelledby="dashboard-title">
+    <section id="dashboard" class="page-section" aria-labelledby="dashboard-title">
       <div class="section-head">
         <div>
           <h2 id="dashboard-title">핵심 복지 지표</h2>
@@ -782,7 +812,7 @@
       </div>
     </section>
 
-    <section id="regions" aria-labelledby="regions-title">
+    <section id="regions" class="page-section" aria-labelledby="regions-title">
       <div class="section-head">
         <div>
           <h2 id="regions-title">지역별 복지 서비스 현황</h2>
@@ -820,7 +850,7 @@
     </section>
 
 
-    <section id="donation" aria-labelledby="donation-title">
+    <section id="donation" class="page-section" aria-labelledby="donation-title">
       <div class="section-head">
         <div>
           <h2 id="donation-title">기부통계</h2>
@@ -899,7 +929,7 @@
     </section>
 
 
-    <section id="today" aria-labelledby="today-title">
+    <section id="today" class="page-section" aria-labelledby="today-title">
       <div class="section-head">
         <div>
           <h2 id="today-title">오늘의 날씨와 주요 뉴스</h2>
@@ -926,7 +956,7 @@
       </div>
     </section>
 
-    <section id="research" aria-labelledby="research-title">
+    <section id="research" class="page-section" aria-labelledby="research-title">
       <div class="section-head">
         <div>
           <h2 id="research-title">화제가 되는 연구결과: 한국·미국·유럽</h2>
@@ -951,7 +981,7 @@
       </article>
     </section>
 
-    <section id="data" aria-labelledby="data-title">
+    <section id="data" class="page-section" aria-labelledby="data-title">
       <div class="section-head">
         <div>
           <h2 id="data-title">샘플 데이터</h2>
@@ -1440,7 +1470,63 @@
       }
     }
 
+    function showPage(pageId, shouldUpdateHash = true) {
+      const validPages = ["top", "dashboard", "regions", "donation", "today", "research", "data"];
+      const targetPage = validPages.includes(pageId) ? pageId : "top";
+
+      document.querySelectorAll(".page-section").forEach(section => {
+        section.classList.toggle("active", section.id === targetPage);
+      });
+
+      document.querySelectorAll("nav a[data-page]").forEach(link => {
+        link.classList.toggle("active", link.dataset.page === targetPage);
+      });
+
+      if (shouldUpdateHash) {
+        history.pushState(null, "", `#${targetPage}`);
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+
+      setTimeout(() => {
+        if (Chart && Chart.instances) {
+          Object.values(Chart.instances).forEach(chart => chart.resize());
+        }
+      }, 80);
+
+      document.title = `${navTitle(targetPage)} | 사회복지 데이터 시각화 대시보드`;
+    }
+
+    function navTitle(pageId) {
+      const titles = {
+        top: "홈",
+        dashboard: "대시보드",
+        regions: "지역 분석",
+        donation: "기부통계",
+        today: "오늘의 정보",
+        research: "연구 동향",
+        data: "샘플 데이터"
+      };
+
+      return titles[pageId] || "홈";
+    }
+
     function bindEvents() {
+      document.querySelectorAll("[data-page]").forEach(link => {
+        link.addEventListener("click", event => {
+          event.preventDefault();
+          showPage(link.dataset.page);
+        });
+      });
+
+      window.addEventListener("popstate", () => {
+        const pageFromHash = location.hash.replace("#", "") || "top";
+        showPage(pageFromHash, false);
+      });
+
       document.getElementById("yearSelect").addEventListener("change", event => {
         updateKpis(event.target.value);
       });
@@ -1472,6 +1558,10 @@
       renderDataRows();
       initCharts();
       bindEvents();
+
+      const pageFromHash = location.hash.replace("#", "") || "top";
+      showPage(pageFromHash, false);
+
       loadWeather();
       loadNews();
       loadResearch();
